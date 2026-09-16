@@ -232,7 +232,7 @@ function setVehiclePicture(vehicle) {
   els.emoji.classList.add("vehicle-picture");
   els.emoji.style.backgroundImage = `url("images/${vehicle.name.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "")}.webp")`;
   els.emoji.style.backgroundPosition = "center";
-  els.name.textContent = "?";
+  els.name.textContent = "";
   els.stage.dataset.sound = "";
 }
 
