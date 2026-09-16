@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2457c5">
+  <meta name="description" content="A teacher-controlled kindergarten game for learning transportation vocabulary, sorting, sounds, and safety.">
+  <title>Transport Town</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232457c5'/%3E%3Cpath d='M13 37h38l-5-14H24l-6 7h-5z' fill='%23ffd54a'/%3E%3Ccircle cx='22' cy='43' r='7' fill='%23232b45'/%3E%3Ccircle cx='44' cy='43' r='7' fill='%23232b45'/%3E%3Ccircle cx='22' cy='43' r='3' fill='white'/%3E%3Ccircle cx='44' cy='43' r='3' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=20260916">
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="topbar">
+      <button class="brand" id="homeBtn" aria-label="Return to game menu">
+        <span class="brand-mark">🚍</span>
+        <span>Transport Town</span>
+      </button>
+      <div class="top-actions">
+        <button class="icon-btn" id="soundBtn" aria-label="Turn sound off" title="Sound on (M)">🔊</button>
+        <button class="icon-btn" id="fullscreenBtn" aria-label="Enter full screen" title="Full screen (F)">⛶</button>
+      </div>
+    </header>
+
+    <section class="screen home-screen active" id="homeScreen" aria-labelledby="homeTitle">
+      <div class="home-copy">
+        <span class="eyebrow">K3 CLASSROOM GAME</span>
+        <h1 id="homeTitle">Where will we go today?</h1>
+        <p>Choose a game and let the class call out the answer.</p>
+      </div>
+      <div class="mode-grid">
+        <button class="mode-card yellow" data-mode="learn">
+          <span class="mode-icon">🚌</span>
+          <span class="mode-text"><strong>Meet the Vehicles</strong><small>Learn all 30 words</small></span>
+          <span class="mode-arrow">›</span>
+        </button>
+        <button class="mode-card green" data-mode="sort">
+          <span class="mode-icon">🌍</span>
+          <span class="mode-text"><strong>Where Does It Go?</strong><small>Land, water, or air</small></span>
+          <span class="mode-arrow">›</span>
+        </button>
+        <button class="mode-card blue" data-mode="sound">
+          <span class="mode-icon">👂</span>
+          <span class="mode-text"><strong>Sound Detective</strong><small>Listen and guess</small></span>
+          <span class="mode-arrow">›</span>
+        </button>
+        <button class="mode-card purple" data-mode="identify">
+          <span class="mode-icon">🔎</span>
+          <span class="mode-text"><strong>Which One Is It?</strong><small>Look, listen, and choose</small></span>
+          <span class="mode-arrow">›</span>
+        </button>
+        <button class="mode-card red" data-mode="safety">
+          <span class="mode-icon">🚦</span>
+          <span class="mode-text"><strong>Safe Traveller</strong><small>Make the safe choice</small></span>
+          <span class="mode-arrow">›</span>
+        </button>
+      </div>
+      <div class="home-parade" aria-hidden="true">
+        <span>🚲</span><span>🚕</span><span>🚂</span><span>🚁</span><span>⛵</span><span>✈️</span>
+      </div>
+    </section>
+
+    <section class="screen game-screen" id="gameScreen" aria-live="polite">
+      <div class="game-status">
+        <button class="back-menu-btn" id="backMenuBtn">← Back to Main Menu</button>
+        <div class="round-label" id="roundLabel">Question 1 of 7</div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="score-pill" id="scorePill"><span class="score-mark" aria-hidden="true">⭐</span> <span id="scoreValue">0</span></div>
+      </div>
+
+      <div class="game-card" id="gameCard">
+        <div class="prompt-row">
+          <span class="mode-badge" id="modeBadge">SORTING</span>
+          <button class="listen-btn" id="listenBtn">🔊 Listen</button>
+        </div>
+        <h2 id="questionText">Where does the bus go?</h2>
+        <p class="question-helper" id="questionHelper">Point, call out the answer, then choose!</p>
+        <div class="vehicle-stage" id="vehicleStage">
+          <div class="vehicle-shadow"></div>
+          <div class="vehicle-emoji" id="vehicleEmoji">🚌</div>
+          <div class="sound-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="vehicle-name" id="vehicleName">BUS</div>
+          <p class="vehicle-definition" id="vehicleDefinition"></p>
+        </div>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback" role="status"></div>
+      </div>
+
+      <div class="teacher-strip">
+        <span>Teacher keys:</span>
+        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> choose
+        <span class="separator">•</span>
+        <kbd>Space</kbd> listen
+        <span class="separator">•</span>
+        <kbd>Enter</kbd> next
+      </div>
+    </section>
+
+    <section class="screen results-screen" id="resultsScreen" aria-labelledby="resultsTitle">
+      <div class="results-card">
+        <div class="result-burst" aria-hidden="true">🎉</div>
+        <span class="eyebrow">ROUND COMPLETE</span>
+        <h2 id="resultsTitle">Brilliant travelling!</h2>
+        <div class="big-stars" id="bigStars">⭐⭐⭐</div>
+        <p class="result-score"><strong id="finalScore">7</strong> out of <strong id="totalQuestions">7</strong> correct</p>
+        <p id="resultMessage">You know how vehicles move!</p>
+        <div class="result-actions">
+          <button class="primary-btn" id="playAgainBtn">Play Again</button>
+          <button class="secondary-btn" id="chooseGameBtn">Choose Another Game</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+  <script src="app.js"></script>
+</body>
+</html>
