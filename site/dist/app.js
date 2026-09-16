@@ -215,12 +215,16 @@ function renderQuestion() {
 }
 
 function setVehicle(vehicle, showName = true) {
-  els.emoji.classList.remove("vehicle-picture");
-  els.emoji.style.backgroundImage = "";
-  els.emoji.style.backgroundPosition = "";
+  clearVehiclePicture();
   els.emoji.textContent = vehicle.icon;
   els.name.textContent = showName ? vehicle.name.toUpperCase() : "?";
   els.stage.dataset.sound = vehicle.sound;
+}
+
+function clearVehiclePicture() {
+  els.emoji.classList.remove("vehicle-picture");
+  els.emoji.style.backgroundImage = "";
+  els.emoji.style.backgroundPosition = "";
 }
 
 function setVehiclePicture(vehicle) {
@@ -258,6 +262,7 @@ function renderSort() {
 function renderSound() {
   const correct = state.questions[state.round];
   els.question.textContent = "Which vehicle makes this sound?";
+  clearVehiclePicture();
   els.emoji.textContent = "👂";
   els.name.textContent = "LISTEN!";
   els.stage.dataset.sound = correct.sound;
@@ -279,6 +284,7 @@ function renderIdentify() {
 function renderSafety() {
   const item = state.questions[state.round];
   els.question.textContent = item.q;
+  clearVehiclePicture();
   els.emoji.textContent = item.icon;
   els.name.textContent = "BE SAFE!";
   els.stage.dataset.sound = "";
