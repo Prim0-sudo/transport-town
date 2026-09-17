@@ -421,12 +421,12 @@ button:focus-visible {
 .game-card[data-mode="hangman"] .vehicle-stage { display: none; }
 .game-card[data-mode="hangman"] .answers { display: block; }
 .hangman-board { width: min(760px, 100%); margin: 0 auto; text-align: center; }
-.ice-cream-meltdown { display: flex; justify-content: center; height: clamp(300px, 38vh, 360px); margin: 0 0 8px; overflow: hidden; }
+.ice-cream-meltdown { display: flex; justify-content: center; height: clamp(250px, 34vh, 280px); margin: 0 0 8px; overflow: hidden; }
 .ice-cream-scene { position: relative; width: 230px; height: 100%; }
-.ice-cream-cone { position: absolute; z-index: 1; left: 0; bottom: -30px; width: 230px; height: 250px; background: url("images/word-games/ice-cream-cone.png") center bottom / contain no-repeat; }
-.ice-cream-stack { position: absolute; z-index: 2; left: 5px; bottom: 215px; width: 220px; display: flex; flex-direction: column; align-items: center; }
-.ice-cream-row { height: 40px; display: flex; justify-content: center; align-items: center; margin-bottom: -8px; }
-.ice-cream-scoop { display: block; width: 54px; height: 54px; margin-inline: -4px; background: center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(88,25,45,.19)); animation: scoop-in .22s ease-out both; animation-delay: calc(var(--scoop-index) * 8ms); }
+.ice-cream-cone { position: absolute; z-index: 1; left: 25px; bottom: -5px; width: 180px; height: 220px; background: url("images/word-games/ice-cream-cone.png") center bottom / contain no-repeat; }
+.ice-cream-stack { position: absolute; z-index: 2; left: 5px; bottom: 58px; width: 220px; display: flex; flex-direction: column; align-items: center; }
+.ice-cream-row { height: 44px; display: flex; justify-content: center; align-items: center; margin-bottom: -7px; }
+.ice-cream-scoop { display: block; width: 58px; height: 58px; margin-inline: -5px; background: center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(88,25,45,.19)); animation: scoop-in .22s ease-out both; animation-delay: calc(var(--scoop-index) * 8ms); }
 .ice-cream-scoop-strawberry { background-image: url("images/word-games/ice-cream-scoop.png"); }
 .ice-cream-scoop-vanilla { background-image: url("images/word-games/ice-cream-vanilla.png"); }
 .ice-cream-scoop-mint { background-image: url("images/word-games/ice-cream-mint.png"); }
