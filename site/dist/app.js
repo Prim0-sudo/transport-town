@@ -66,7 +66,7 @@ const modeInfo = {
   sound: { badge: "LISTENING", title: "Which vehicle makes this sound?", helper: "Listen carefully, then choose." },
   identify: { badge: "WHICH ONE IS IT?", title: "", helper: "Look at the picture, listen, then choose." },
   safety: { badge: "ROAD SAFETY", title: "", helper: "Choose the safest answer." },
-  hangman: { badge: "WORD BUILDER", title: "Can you guess the transport word?", helper: "Use the clue, then tap or type a letter." }
+  hangman: { badge: "WORD BUILDER", title: "Build the transport word!", helper: "Use the clue, then tap or type a letter." }
 };
 
 const screens = {
@@ -342,12 +342,10 @@ function renderHangman() {
   const guessed = new Set(item.guessed);
   const letters = hangmanLetters(v.name);
   clearVehiclePicture();
-  els.emoji.textContent = "🔤";
-  els.name.textContent = "TRANSPORT WORD";
+  els.emoji.textContent = "";
+  els.name.textContent = "";
   els.stage.dataset.sound = "";
-  els.question.textContent = "Can you guess the transport word?";
-  els.definition.textContent = v.definition;
-  els.definition.classList.add("visible");
+  els.question.textContent = "Build the transport word!";
   const wordMarkup = [...v.name].map(character => {
     if (character === " ") return '<span class="hangman-letter hangman-space" aria-hidden="true"></span>';
     const shown = guessed.has(character.toLowerCase()) || state.answered;
@@ -360,7 +358,7 @@ function renderHangman() {
     const className = wasGuessed ? (isCorrect ? "correct" : "wrong") : "";
     return `<button class="hangman-key ${className}" data-letter="${letter}" ${wasGuessed || state.answered ? "disabled" : ""}>${letter.toUpperCase()}</button>`;
   }).join("");
-  els.answers.innerHTML = `<div class="hangman-board"><div class="hangman-word" aria-label="Hidden transport word">${wordMarkup}</div><div class="hangman-status"><span>Wrong guesses: ${item.misses} of 6</span><span class="hangman-route">${routeMarkup}</span></div><div class="hangman-keys" aria-label="Letter keyboard">${keyboard}</div></div>`;
+  els.answers.innerHTML = `<div class="hangman-board"><div class="hangman-clue"><span class="hangman-clue-label">💡 CLUE</span><p>${v.definition}</p></div><div class="hangman-word" aria-label="Hidden transport word">${wordMarkup}</div><div class="hangman-status"><span>Wrong guesses: <strong>${item.misses} of 6</strong></span><span class="hangman-route">${routeMarkup}</span></div><div class="hangman-keys" aria-label="Letter keyboard">${keyboard}</div></div>`;
   els.answers.querySelectorAll("[data-letter]").forEach(button => button.addEventListener("click", () => chooseHangmanLetter(button.dataset.letter)));
 }
 
@@ -453,7 +451,7 @@ function currentPrompt() {
     const item = state.questions[state.round];
     return identifyQuestion(item.choices);
   }
-  if (state.mode === "hangman") return "Can you guess the transport word? Use the clue and choose a letter.";
+  if (state.mode === "hangman") return "Build the transport word. Use the clue and choose a letter.";
   const v = state.questions[state.round];
   if (state.mode === "learn") return `This is a ${v.name}.`;
   if (state.mode === "sort") return `Where does the ${v.name} travel? Land, water, or air?`;
