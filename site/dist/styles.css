@@ -424,7 +424,7 @@ button:focus-visible {
 .ice-cream-meltdown { display: flex; justify-content: center; height: clamp(210px, 30vh, 270px); margin: 0 0 8px; overflow: hidden; }
 .ice-cream-scene { position: relative; width: 150px; height: 100%; }
 .ice-cream-cone { position: absolute; z-index: 1; left: 24px; bottom: -6px; width: 102px; height: 130px; background: url("images/word-games/ice-cream-cone.png") center bottom / contain no-repeat; }
-.ice-cream-stack { position: absolute; z-index: 2; left: 47px; bottom: 130px; width: 56px; display: flex; flex-direction: column-reverse; align-items: center; transform: scale(2); transform-origin: center bottom; }
+.ice-cream-stack { position: absolute; z-index: 2; left: 47px; bottom: 130px; width: 56px; display: flex; flex-direction: column-reverse; align-items: center; transform: scale(4); transform-origin: center bottom; }
 .ice-cream-scoop { width: 36px; height: 36px; margin-bottom: -26px; background: center / contain no-repeat; filter: drop-shadow(0 2px 1px rgba(88,25,45,.17)); animation: scoop-in .22s ease-out both; animation-delay: calc(var(--scoop-index) * 8ms); }
 .ice-cream-scoop-strawberry { background-image: url("images/word-games/ice-cream-scoop.png"); }
 .ice-cream-scoop-vanilla { background-image: url("images/word-games/ice-cream-vanilla.png"); }
