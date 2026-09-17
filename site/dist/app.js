@@ -32,7 +32,6 @@ const vehicles = [
 ];
 
 const emojiSlug = name => name.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
-const MAX_SCOOPS = Math.max(...vehicles.map(vehicle => vehicle.name.replace(/[^a-z]/gi, "").length));
 vehicles.forEach(vehicle => {
   const slug = emojiSlug(vehicle.name);
   const userSlug = vehicle.name === "space shuttle" ? "rocket_ship" : slug;
@@ -344,6 +343,7 @@ function renderHangman() {
   const v = item.vehicle;
   const guessed = new Set(item.guessed);
   const letters = hangmanLetters(v.name);
+  const scoopCount = letters.length;
   clearVehiclePicture();
   els.emoji.textContent = "";
   els.name.textContent = "";
@@ -354,8 +354,9 @@ function renderHangman() {
     const shown = guessed.has(character.toLowerCase()) || state.answered;
     return `<span class="hangman-letter">${shown ? character : ""}</span>`;
   }).join("");
-  const scoops = Array.from({ length: MAX_SCOOPS - item.misses }, (_, index) => `<i class="ice-cream-scoop" style="--scoop-index:${index}" aria-hidden="true"></i>`).join("");
-  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${MAX_SCOOPS - item.misses} of ${MAX_SCOOPS}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
+  const scoopFlavors = ["strawberry", "vanilla", "mint"];
+  const scoops = Array.from({ length: scoopCount - item.misses }, (_, index) => `<i class="ice-cream-scoop ice-cream-scoop-${scoopFlavors[index % scoopFlavors.length]}" style="--scoop-index:${index}" aria-hidden="true"></i>`).join("");
+  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${scoopCount - item.misses} of ${scoopCount}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
   const keyboard = "abcdefghijklmnopqrstuvwxyz".split("").map(letter => {
     const wasGuessed = guessed.has(letter);
     const isCorrect = letters.includes(letter);
@@ -375,7 +376,7 @@ function chooseHangmanLetter(letter) {
   const correct = letters.includes(letter);
   if (!correct) item.misses++;
   const complete = [...letters].every(character => item.guessed.includes(character));
-  if (complete || item.misses >= MAX_SCOOPS) {
+  if (complete || item.misses >= letters.length) {
     state.answered = true;
     if (complete && item.misses === 0) state.score++;
     renderHangman();
