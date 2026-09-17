@@ -65,7 +65,8 @@ const modeInfo = {
   sort: { badge: "SORTING", title: "Where does the {vehicle} travel?", helper: "Land, water, or air?" },
   sound: { badge: "LISTENING", title: "Which vehicle makes this sound?", helper: "Listen carefully, then choose." },
   identify: { badge: "WHICH ONE IS IT?", title: "", helper: "Look at the picture, listen, then choose." },
-  safety: { badge: "ROAD SAFETY", title: "", helper: "Choose the safest answer." }
+  safety: { badge: "ROAD SAFETY", title: "", helper: "Choose the safest answer." },
+  hangman: { badge: "WORD BUILDER", title: "Can you guess the transport word?", helper: "Use the clue, then tap or type a letter." }
 };
 
 const screens = {
@@ -201,6 +202,7 @@ function startGame(mode) {
   else if (mode === "sort") questions = shuffled(vehicles);
   else if (mode === "learn") questions = [...vehicles];
   else if (mode === "identify") questions = shuffled(vehicles).map(vehicle => ({ vehicle, choices: identifyChoices(vehicle) }));
+  else if (mode === "hangman") questions = shuffled(vehicles).slice(0, 10).map(vehicle => ({ vehicle, guessed: [], misses: 0 }));
   else questions = shuffled(listeningVehicles);
   state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false };
   showScreen("game");
@@ -216,7 +218,7 @@ function renderQuestion() {
   const total = state.questions.length;
   els.feedback.textContent = "";
   els.feedback.className = "feedback";
-  const longRound = state.mode === "sort" || state.mode === "sound" || state.mode === "identify";
+  const longRound = state.mode === "sort" || state.mode === "sound" || state.mode === "identify" || state.mode === "hangman";
   els.round.textContent = longRound ? `Level ${state.round + 1} of ${total}` : `Question ${state.round + 1} of ${total}`;
   els.progress.style.width = `${(state.round / total) * 100}%`;
   els.score.textContent = state.score;
@@ -238,6 +240,7 @@ function renderQuestion() {
   else if (state.mode === "learn") renderLearn();
   else if (state.mode === "sort") renderSort();
   else if (state.mode === "identify") renderIdentify();
+  else if (state.mode === "hangman") renderHangman();
   else renderSound();
 
   setTimeout(() => state.mode === "sound" ? playCurrentAudio() : speakCurrentPrompt(), 260);
@@ -329,6 +332,68 @@ function renderSafety() {
     .forEach(a => makeAnswer(a.label, a.icon, a.correct, item.explain));
 }
 
+function hangmanLetters(name) {
+  return name.toLowerCase().replace(/[^a-z]/g, "");
+}
+
+function renderHangman() {
+  const item = state.questions[state.round];
+  const v = item.vehicle;
+  const guessed = new Set(item.guessed);
+  const letters = hangmanLetters(v.name);
+  clearVehiclePicture();
+  els.emoji.textContent = "🔤";
+  els.name.textContent = "TRANSPORT WORD";
+  els.stage.dataset.sound = "";
+  els.question.textContent = "Can you guess the transport word?";
+  els.definition.textContent = v.definition;
+  els.definition.classList.add("visible");
+  const wordMarkup = [...v.name].map(character => {
+    if (character === " ") return '<span class="hangman-letter hangman-space" aria-hidden="true"></span>';
+    const shown = guessed.has(character.toLowerCase()) || state.answered;
+    return `<span class="hangman-letter">${shown ? character : ""}</span>`;
+  }).join("");
+  const routeMarkup = Array.from({ length: 6 }, (_, index) => `<i class="${index < item.misses ? "miss" : ""}" aria-hidden="true"></i>`).join("");
+  const keyboard = "abcdefghijklmnopqrstuvwxyz".split("").map(letter => {
+    const wasGuessed = guessed.has(letter);
+    const isCorrect = letters.includes(letter);
+    const className = wasGuessed ? (isCorrect ? "correct" : "wrong") : "";
+    return `<button class="hangman-key ${className}" data-letter="${letter}" ${wasGuessed || state.answered ? "disabled" : ""}>${letter.toUpperCase()}</button>`;
+  }).join("");
+  els.answers.innerHTML = `<div class="hangman-board"><div class="hangman-word" aria-label="Hidden transport word">${wordMarkup}</div><div class="hangman-status"><span>Wrong guesses: ${item.misses} of 6</span><span class="hangman-route">${routeMarkup}</span></div><div class="hangman-keys" aria-label="Letter keyboard">${keyboard}</div></div>`;
+  els.answers.querySelectorAll("[data-letter]").forEach(button => button.addEventListener("click", () => chooseHangmanLetter(button.dataset.letter)));
+}
+
+function chooseHangmanLetter(letter) {
+  if (state.mode !== "hangman" || state.answered) return;
+  const item = state.questions[state.round];
+  if (item.guessed.includes(letter)) return;
+  item.guessed.push(letter);
+  const letters = hangmanLetters(item.vehicle.name);
+  const correct = letters.includes(letter);
+  if (!correct) item.misses++;
+  const complete = [...letters].every(character => item.guessed.includes(character));
+  if (complete || item.misses >= 6) {
+    state.answered = true;
+    if (complete && item.misses === 0) state.score++;
+    renderHangman();
+    els.score.textContent = state.score;
+    const message = complete
+      ? `Great spelling! It is a ${item.vehicle.name}.`
+      : `The word was ${item.vehicle.name.toUpperCase()}.`;
+    els.feedback.className = complete ? "feedback good" : "feedback try";
+    els.feedback.innerHTML = `${message} <button class="next-btn" id="nextBtn">Next ➜</button>`;
+    speak(message);
+    if (complete) { tone(523, 0, .16); tone(659, .16, .16); tone(784, .32, .28); }
+    document.getElementById("nextBtn").onclick = nextQuestion;
+    return;
+  }
+  els.feedback.className = correct ? "feedback good" : "feedback try";
+  els.feedback.textContent = correct ? "Yes! That letter is in the word." : "Not this time. Try another letter!";
+  if (correct) tone(523, 0, .16); else tone(180, 0, .18, "sine", .08);
+  renderHangman();
+}
+
 function makeAnswer(label, icon, correct, explain, revealVehicle = false, imagePath = "") {
   const btn = document.createElement("button");
   btn.className = "answer-btn";
@@ -388,6 +453,7 @@ function currentPrompt() {
     const item = state.questions[state.round];
     return identifyQuestion(item.choices);
   }
+  if (state.mode === "hangman") return "Can you guess the transport word? Use the clue and choose a letter.";
   const v = state.questions[state.round];
   if (state.mode === "learn") return `This is a ${v.name}.`;
   if (state.mode === "sort") return `Where does the ${v.name} travel? Land, water, or air?`;
@@ -413,7 +479,7 @@ function finishGame() {
   els.totalQuestions.textContent = total;
   const ratio = state.score / total;
   els.stars.textContent = ratio >= .85 ? "⭐⭐⭐" : ratio >= .55 ? "⭐⭐" : "⭐";
-  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : `You reviewed all ${vehicles.length} transportation words!`;
+  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : state.mode === "hangman" ? "You built and spelled transport words!" : `You reviewed all ${vehicles.length} transportation words!`;
   showScreen("results");
   speak(`Round complete! You got ${state.score} out of ${total}.`);
   burstConfetti();
@@ -474,6 +540,11 @@ document.addEventListener("keydown", e => {
   if (e.key.toLowerCase() === "f") document.getElementById("fullscreenBtn").click();
   if (e.key === "Escape" && active && !document.fullscreenElement) goHome();
   if (!active) return;
+  if (state.mode === "hangman" && /^[a-z]$/i.test(e.key)) {
+    e.preventDefault();
+    chooseHangmanLetter(e.key.toLowerCase());
+    return;
+  }
   if (e.code === "Space") { e.preventDefault(); playCurrentAudio(); }
   if (["1", "2", "3"].includes(e.key)) {
     const target = els.answers.children[Number(e.key) - 1];
