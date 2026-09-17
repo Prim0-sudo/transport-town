@@ -426,6 +426,21 @@ button:focus-visible {
 .hangman-clue { margin: 0 auto 14px; padding: 10px 16px; border-radius: 16px; background: #eef5ff; color: #43516f; }
 .hangman-clue-label { display: block; margin-bottom: 3px; color: var(--blue); font-size: .78rem; font-weight: 1000; letter-spacing: .12em; }
 .hangman-clue p { margin: 0; font-size: clamp(.98rem, 1.7vw, 1.15rem); font-weight: 800; line-height: 1.35; }
+.ice-cream-meltdown { display: flex; align-items: center; justify-content: center; gap: 12px; height: 104px; margin: 0 0 4px; color: #9d3f62; font-weight: 1000; }
+.ice-cream-scene { position: relative; width: 112px; height: 104px; overflow: hidden; }
+.ice-cream-art { position: absolute; z-index: 2; inset: 0; background: url("images/word-games/ice-cream.png") center / contain no-repeat; filter: drop-shadow(0 5px 4px rgba(83,41,81,.16)); transition: transform .28s ease, filter .28s ease, opacity .28s ease; }
+.melt-drip { position: absolute; z-index: 1; bottom: 6px; width: 18px; height: 28px; border-radius: 50% 50% 45% 45%; background: #ff8dac; animation: drip-in .28s ease-out both; }
+.drip-1 { left: 35px; background: #ff9db7; }
+.drip-2 { left: 57px; height: 36px; background: #fff1cd; }
+.drip-3 { left: 75px; background: #a9e9ca; }
+.drip-4 { left: 19px; height: 34px; background: #ff9db7; }
+.drip-5 { left: 51px; height: 47px; background: #fff1cd; }
+.drip-6 { left: 84px; height: 43px; background: #a9e9ca; }
+.melt-3 .ice-cream-art { transform: translateY(5px) rotate(2deg); }
+.melt-5 .ice-cream-art { transform: translateY(12px) rotate(5deg); filter: saturate(.8) drop-shadow(0 5px 4px rgba(83,41,81,.16)); }
+.melt-6 .ice-cream-art { transform: translateY(24px) rotate(10deg); opacity: .45; }
+.melt-label { min-width: 130px; padding: 8px 12px; border-radius: 12px; background: #fff0f5; color: #b13e68; font-size: .84rem; letter-spacing: .06em; text-align: center; }
+.melt-6 .melt-label { background: #ffe0e0; color: #b72d3c; }
 .hangman-word { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
 .hangman-letter { width: clamp(34px, 5vw, 50px); height: clamp(44px, 5.8vw, 56px); border-bottom: 5px solid #34528f; display: grid; place-items: center; color: var(--ink); font-size: clamp(1.5rem, 3.1vw, 2.25rem); font-weight: 1000; text-transform: uppercase; }
 .hangman-space { width: 18px; border-bottom-color: transparent; }
@@ -479,6 +494,7 @@ kbd { min-width: 24px; padding: 2px 6px; border-radius: 5px; color: #273157; bac
 @keyframes pop { 0% { transform: scale(.75); } 65% { transform: scale(1.1); } 100% { transform: scale(1); } }
 @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-9px); } 75% { transform: translateX(9px); } }
 @keyframes fall { to { transform: translate3d(var(--drift), 110vh, 0) rotate(760deg); } }
+@keyframes drip-in { from { transform: translateY(-10px) scale(.5); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
 @media (max-width: 760px) {
   .shell { padding: 10px 12px 16px; }
