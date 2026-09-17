@@ -32,32 +32,32 @@
       <div class="mode-grid">
         <button class="mode-card yellow" data-mode="learn">
           <span class="mode-icon">🚌</span>
-          <span class="mode-text"><strong>Meet the Vehicles</strong><small>Learn all 30 words</small></span>
+          <span class="mode-text"><strong>Meet the Vehicles</strong></span>
           <span class="mode-arrow">›</span>
         </button>
         <button class="mode-card green" data-mode="sort">
           <span class="mode-icon">🌍</span>
-          <span class="mode-text"><strong>Where Does It Go?</strong><small>Land, water, or air</small></span>
+          <span class="mode-text"><strong>Where Does It Go?</strong></span>
           <span class="mode-arrow">›</span>
         </button>
         <button class="mode-card blue" data-mode="sound">
           <span class="mode-icon">👂</span>
-          <span class="mode-text"><strong>Sound Detective</strong><small>Listen and guess</small></span>
+          <span class="mode-text"><strong>Sound Detective</strong></span>
           <span class="mode-arrow">›</span>
         </button>
         <button class="mode-card purple" data-mode="identify">
           <span class="mode-icon">🔎</span>
-          <span class="mode-text"><strong>Which One Is It?</strong><small>Look, listen, and choose</small></span>
+          <span class="mode-text"><strong>Which One Is It?</strong></span>
           <span class="mode-arrow">›</span>
         </button>
         <button class="mode-card red" data-mode="safety">
           <span class="mode-icon">🚦</span>
-          <span class="mode-text"><strong>Safe Traveller</strong><small>Make the safe choice</small></span>
+          <span class="mode-text"><strong>Safe Traveller</strong></span>
           <span class="mode-arrow">›</span>
         </button>
         <button class="mode-card orange" data-mode="hangman">
           <span class="mode-icon">🍦</span>
-          <span class="mode-text"><strong>Ice Cream Meltdown</strong><small>Build the word before it melts</small></span>
+          <span class="mode-text"><strong>Ice Cream Meltdown</strong></span>
           <span class="mode-arrow">›</span>
         </button>
       </div>
@@ -68,7 +68,7 @@
 
     <section class="screen game-screen" id="gameScreen" aria-live="polite">
       <div class="game-status">
-        <button class="back-menu-btn" id="backMenuBtn">← Back to Main Menu</button>
+        <button class="back-menu-btn" id="backMenuBtn" aria-label="Back to Main Menu" title="Back to Main Menu">←</button>
         <div class="round-label" id="roundLabel">Question 1 of 7</div>
         <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
         <div class="score-pill" id="scorePill"><span class="score-mark" aria-hidden="true">⭐</span> <span id="scoreValue">0</span></div>
@@ -79,7 +79,7 @@
           <span class="mode-badge" id="modeBadge">SORTING</span>
           <div class="prompt-actions">
             <button class="emoji-toggle-btn" id="emojiToggle" hidden>Turn off emojis</button>
-            <button class="listen-btn" id="listenBtn">🔊 Listen</button>
+            <button class="listen-btn" id="listenBtn" aria-label="Listen" title="Listen">🔊</button>
           </div>
         </div>
         <h2 id="questionText">Where does the bus go?</h2>
@@ -95,16 +95,6 @@
         <div class="feedback" id="feedback" role="status"></div>
       </div>
 
-      <div class="teacher-strip">
-        <span>Teacher keys:</span>
-        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> choose
-        <span class="separator">•</span>
-        <kbd>Space</kbd> listen
-        <span class="separator">•</span>
-        <kbd>Enter</kbd> next
-        <span class="separator">•</span>
-        <kbd>A–Z</kbd> Ice Cream Meltdown letters
-      </div>
     </section>
 
     <section class="screen results-screen" id="resultsScreen" aria-labelledby="resultsTitle">

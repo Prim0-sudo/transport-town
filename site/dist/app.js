@@ -32,6 +32,7 @@ const vehicles = [
 ];
 
 const emojiSlug = name => name.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
+const MAX_SCOOPS = Math.max(...vehicles.map(vehicle => vehicle.name.replace(/[^a-z]/gi, "").length));
 vehicles.forEach(vehicle => {
   const slug = emojiSlug(vehicle.name);
   const userSlug = vehicle.name === "space shuttle" ? "rocket_ship" : slug;
@@ -61,12 +62,12 @@ const zones = [
 ];
 
 const modeInfo = {
-  learn: { badge: "VOCABULARY", title: "What vehicle is this?", helper: "Say the word together!" },
-  sort: { badge: "SORTING", title: "Where does the {vehicle} travel?", helper: "Land, water, or air?" },
-  sound: { badge: "LISTENING", title: "Which vehicle makes this sound?", helper: "Listen carefully, then choose." },
-  identify: { badge: "WHICH ONE IS IT?", title: "", helper: "Look at the picture, listen, then choose." },
-  safety: { badge: "ROAD SAFETY", title: "", helper: "Choose the safest answer." },
-  hangman: { badge: "ICE CREAM MELTDOWN", title: "Build the transport word!", helper: "Each wrong letter melts another scoop." }
+  learn: { badge: "VOCABULARY", title: "What vehicle is this?", helper: "" },
+  sort: { badge: "SORTING", title: "Where does the {vehicle} travel?", helper: "" },
+  sound: { badge: "LISTENING", title: "Which vehicle makes this sound?", helper: "" },
+  identify: { badge: "WHICH ONE IS IT?", title: "", helper: "" },
+  safety: { badge: "ROAD SAFETY", title: "", helper: "" },
+  hangman: { badge: "ICE CREAM MELTDOWN", title: "", helper: "" }
 };
 
 const screens = {
@@ -219,7 +220,7 @@ function renderQuestion() {
   els.feedback.textContent = "";
   els.feedback.className = "feedback";
   const longRound = state.mode === "sort" || state.mode === "sound" || state.mode === "identify" || state.mode === "hangman";
-  els.round.textContent = longRound ? `Level ${state.round + 1} of ${total}` : `Question ${state.round + 1} of ${total}`;
+  els.round.textContent = `${state.round + 1}/${total}`;
   els.progress.style.width = `${(state.round / total) * 100}%`;
   els.score.textContent = state.score;
   els.answers.innerHTML = "";
@@ -232,9 +233,11 @@ function renderQuestion() {
   const info = modeInfo[state.mode];
   els.modeBadge.textContent = info.badge;
   els.helper.textContent = info.helper;
-  els.listen.textContent = state.mode === "sound" ? "🔊 Play Sound" : "🔊 Listen";
+  els.listen.textContent = "🔊";
   els.emojiToggle.hidden = state.mode !== "identify";
-  els.emojiToggle.textContent = state.identifyEmojis ? "Turn off emojis" : "Turn on emojis";
+  els.emojiToggle.textContent = state.identifyEmojis ? "🙈" : "🖼️";
+  els.emojiToggle.title = state.identifyEmojis ? "Hide answer pictures" : "Show answer pictures";
+  els.emojiToggle.setAttribute("aria-label", els.emojiToggle.title);
 
   if (state.mode === "safety") renderSafety();
   else if (state.mode === "learn") renderLearn();
@@ -345,21 +348,21 @@ function renderHangman() {
   els.emoji.textContent = "";
   els.name.textContent = "";
   els.stage.dataset.sound = "";
-  els.question.textContent = "Build the transport word!";
+  els.question.textContent = "";
   const wordMarkup = [...v.name].map(character => {
     if (character === " ") return '<span class="hangman-letter hangman-space" aria-hidden="true"></span>';
     const shown = guessed.has(character.toLowerCase()) || state.answered;
     return `<span class="hangman-letter">${shown ? character : ""}</span>`;
   }).join("");
-  const drips = Array.from({ length: item.misses }, (_, index) => `<i class="melt-drip drip-${index + 1}" aria-hidden="true"></i>`).join("");
-  const iceCreamMarkup = `<div class="ice-cream-meltdown melt-${item.misses}" aria-label="Ice cream melts: ${item.misses} of 6"><div class="ice-cream-scene"><span class="ice-cream-art" aria-hidden="true"></span>${drips}</div><span class="melt-label">${item.misses >= 6 ? "MELTDOWN!" : `${6 - item.misses} CHANCES LEFT`}</span></div>`;
+  const scoops = Array.from({ length: MAX_SCOOPS - item.misses }, (_, index) => `<i class="ice-cream-scoop" style="--scoop-index:${index}" aria-hidden="true"></i>`).join("");
+  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${MAX_SCOOPS - item.misses} of ${MAX_SCOOPS}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
   const keyboard = "abcdefghijklmnopqrstuvwxyz".split("").map(letter => {
     const wasGuessed = guessed.has(letter);
     const isCorrect = letters.includes(letter);
     const className = wasGuessed ? (isCorrect ? "correct" : "wrong") : "";
     return `<button class="hangman-key ${className}" data-letter="${letter}" ${wasGuessed || state.answered ? "disabled" : ""}>${letter.toUpperCase()}</button>`;
   }).join("");
-  els.answers.innerHTML = `<div class="hangman-board"><div class="hangman-clue"><span class="hangman-clue-label">💡 CLUE</span><p>${v.definition}</p></div>${iceCreamMarkup}<div class="hangman-word" aria-label="Hidden transport word">${wordMarkup}</div><div class="hangman-keys" aria-label="Letter keyboard">${keyboard}</div></div>`;
+  els.answers.innerHTML = `<div class="hangman-board">${iceCreamMarkup}<div class="hangman-word" aria-label="Hidden transport word">${wordMarkup}</div><div class="hangman-keys" aria-label="Letter keyboard">${keyboard}</div></div>`;
   els.answers.querySelectorAll("[data-letter]").forEach(button => button.addEventListener("click", () => chooseHangmanLetter(button.dataset.letter)));
 }
 
@@ -372,23 +375,20 @@ function chooseHangmanLetter(letter) {
   const correct = letters.includes(letter);
   if (!correct) item.misses++;
   const complete = [...letters].every(character => item.guessed.includes(character));
-  if (complete || item.misses >= 6) {
+  if (complete || item.misses >= MAX_SCOOPS) {
     state.answered = true;
     if (complete && item.misses === 0) state.score++;
     renderHangman();
     els.score.textContent = state.score;
-    const message = complete
-      ? `Great spelling! It is a ${item.vehicle.name}.`
-      : `Meltdown! The word was ${item.vehicle.name.toUpperCase()}.`;
     els.feedback.className = complete ? "feedback good" : "feedback try";
-    els.feedback.innerHTML = `${message} <button class="next-btn" id="nextBtn">Next ➜</button>`;
-    speak(message);
+    els.feedback.innerHTML = `<button class="next-btn" id="nextBtn" aria-label="Next word">➜</button>`;
+    speak(complete ? `Correct. ${item.vehicle.name}.` : item.vehicle.name);
     if (complete) { tone(523, 0, .16); tone(659, .16, .16); tone(784, .32, .28); }
     document.getElementById("nextBtn").onclick = nextQuestion;
     return;
   }
-  els.feedback.className = correct ? "feedback good" : "feedback try";
-  els.feedback.textContent = correct ? "Yes! That letter is in the word." : "Oh no, a scoop is melting! Try another letter.";
+  els.feedback.className = "feedback";
+  els.feedback.textContent = "";
   if (correct) tone(523, 0, .16); else tone(180, 0, .18, "sine", .08);
   renderHangman();
 }
@@ -412,9 +412,8 @@ function chooseAnswer(btn, correct, explain, revealVehicle) {
     state.wrongThisRound = true;
     btn.classList.add("wrong");
     btn.disabled = true;
-    els.feedback.className = "feedback try";
-    els.feedback.textContent = "Not that one. Try again!";
-    speak("Not that one. Try again!");
+    els.feedback.className = "feedback";
+    els.feedback.textContent = "";
     tone(180, 0, .18, "sine", .08);
     return;
   }
@@ -432,10 +431,10 @@ function chooseAnswer(btn, correct, explain, revealVehicle) {
       setVehicle(correctVehicle, true);
     }
   }
-  els.feedback.className = "feedback good";
-  els.feedback.innerHTML = `${explain} <button class="next-btn" id="nextBtn">Next ➜</button>`;
+  els.feedback.className = "feedback";
+  els.feedback.innerHTML = `<button class="next-btn" id="nextBtn" aria-label="Next">➜</button>`;
   els.score.textContent = state.score;
-  speak(`Correct! ${explain}`);
+  speak("Correct!");
   tone(523, 0, .16); tone(659, .16, .16); tone(784, .32, .28);
   document.getElementById("nextBtn").onclick = nextQuestion;
 }
@@ -452,7 +451,7 @@ function currentPrompt() {
     const item = state.questions[state.round];
     return identifyQuestion(item.choices);
   }
-  if (state.mode === "hangman") return "Build the transport word before the ice cream melts. Use the clue and choose a letter.";
+  if (state.mode === "hangman") return "";
   const v = state.questions[state.round];
   if (state.mode === "learn") return `This is a ${v.name}.`;
   if (state.mode === "sort") return `Where does the ${v.name} travel? Land, water, or air?`;
@@ -514,7 +513,9 @@ els.listen.addEventListener("click", playCurrentAudio);
 els.emojiToggle.addEventListener("click", () => {
   state.identifyEmojis = !state.identifyEmojis;
   document.getElementById("gameCard").classList.toggle("hide-answer-emojis", !state.identifyEmojis);
-  els.emojiToggle.textContent = state.identifyEmojis ? "Turn off emojis" : "Turn on emojis";
+  els.emojiToggle.textContent = state.identifyEmojis ? "🙈" : "🖼️";
+  els.emojiToggle.title = state.identifyEmojis ? "Hide answer pictures" : "Show answer pictures";
+  els.emojiToggle.setAttribute("aria-label", els.emojiToggle.title);
 });
 
 els.sound.addEventListener("click", () => {
