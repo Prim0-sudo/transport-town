@@ -338,11 +338,6 @@ function hangmanLetters(name) {
   return name.toLowerCase().replace(/[^a-z]/g, "");
 }
 
-function scoopRows(count) {
-  const layouts = [[], [1], [1, 1], [1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 3], [1, 1, 2, 3], [1, 2, 2, 3], [1, 2, 3, 3], [1, 2, 3, 4], [2, 2, 3, 4], [2, 3, 3, 4], [2, 3, 4, 4]];
-  return layouts[count] || layouts[layouts.length - 1];
-}
-
 function renderHangman() {
   const item = state.questions[state.round];
   const v = item.vehicle;
@@ -360,16 +355,8 @@ function renderHangman() {
     return `<span class="hangman-letter">${shown ? character : ""}</span>`;
   }).join("");
   const scoopFlavors = ["strawberry", "vanilla", "mint"];
-  const scoopsRemaining = scoopCount - item.misses;
-  let scoopIndex = 0;
-  const scoops = scoopRows(scoopsRemaining).map(rowSize => {
-    const row = Array.from({ length: rowSize }, () => {
-      const flavor = scoopFlavors[scoopIndex % scoopFlavors.length];
-      return `<i class="ice-cream-scoop ice-cream-scoop-${flavor}" style="--scoop-index:${scoopIndex++}" aria-hidden="true"></i>`;
-    }).join("");
-    return `<span class="ice-cream-row">${row}</span>`;
-  }).join("");
-  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${scoopsRemaining} of ${scoopCount}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
+  const scoops = Array.from({ length: scoopCount - item.misses }, (_, index) => `<i class="ice-cream-scoop ice-cream-scoop-${scoopFlavors[index % scoopFlavors.length]}" style="--scoop-index:${index}" aria-hidden="true"></i>`).join("");
+  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${scoopCount - item.misses} of ${scoopCount}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
   const keyboard = "abcdefghijklmnopqrstuvwxyz".split("").map(letter => {
     const wasGuessed = guessed.has(letter);
     const isCorrect = letters.includes(letter);
