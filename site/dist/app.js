@@ -16,7 +16,6 @@ const vehicles = [
   { name: "ambulance", icon: "🚑", zone: "land", sound: "ambulance", definition: "An emergency vehicle equipped to take sick or injured people to the hospital." },
   { name: "fire engine", icon: "🚒", zone: "land", sound: "fire-engine", definition: "A heavy vehicle carrying firefighters and equipment to put out fires." },
   { name: "tractor", icon: "🚜", zone: "land", sound: "tractor", definition: "A powerful vehicle used on farms to pull equipment and plow fields." },
-  { name: "tuk-tuk", icon: "🛺", zone: "land", sound: "tuk-tuk", definition: "A three-wheeled motorized vehicle commonly used for urban transport." },
   { name: "rickshaw", icon: "🛺", zone: "land", sound: "rickshaw", definition: "A small two- or three-wheeled cart pulled by a person or a bicycle." },
   { name: "skateboard", icon: "🛹", zone: "land", sound: "skateboard", definition: "A short board with four small wheels ridden for fun or short trips." },
   { name: "boat", icon: "🚤", zone: "water", sound: "boat", definition: "A small watercraft used for traveling on rivers, lakes, or coastal areas." },
@@ -24,12 +23,23 @@ const vehicles = [
   { name: "ferry", icon: "⛴️", zone: "water", sound: "ship", definition: "A boat that carries passengers, vehicles, and goods across a body of water." },
   { name: "speedboat", icon: "🚤", zone: "water", sound: "speedboat", definition: "A fast motorboat designed for high speeds on water." },
   { name: "yacht", icon: "🛥️", zone: "water", sound: "boat", definition: "A luxury boat used for cruising, recreation, or racing." },
-  { name: "jet ski", icon: "🌊🏍️", zone: "water", sound: "jet-ski", definition: "A small, personal watercraft driven by a jet pump." },
+  { name: "jet ski", icon: "", zone: "water", sound: "jet-ski", definition: "A small, personal watercraft driven by a jet pump." },
   { name: "airplane", icon: "✈️", zone: "air", sound: "airplane", definition: "A powered flying vehicle with fixed wings for long-distance travel." },
   { name: "helicopter", icon: "🚁", zone: "air", sound: "helicopter", definition: "An aircraft with rotating blades that can take off and land vertically." },
   { name: "hot air balloon", icon: "🎈", zone: "air", sound: "hot-air-balloon", definition: "A large balloon filled with heated air to lift a basket for flight." },
-  { name: "glider", icon: "🛩️", zone: "air", sound: "wind", definition: "A lightweight aircraft that flies without an engine using air currents." }
+  { name: "glider", icon: "🛩️", zone: "air", sound: "wind", definition: "A lightweight aircraft that flies without an engine using air currents." },
+  { name: "space shuttle", icon: "🚀", zone: "air", sound: "rocket", definition: "A spacecraft that launches into space and can return to Earth." }
 ];
+
+const emojiSlug = name => name.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
+vehicles.forEach(vehicle => {
+  const slug = emojiSlug(vehicle.name);
+  const userSlug = vehicle.name === "space shuttle" ? "rocket_ship" : slug;
+  vehicle.iconImages = [
+    `images/emoji-codex/${slug}.png`,
+    `images/emoji-user/${userSlug}.png`
+  ];
+});
 
 const listeningVehicles = vehicles.filter(vehicle => vehicle.sound);
 
@@ -45,9 +55,9 @@ const safetyQuestions = [
 ];
 
 const zones = [
-  { name: "Land", icon: "🛣️", value: "land" },
-  { name: "Water", icon: "🌊", value: "water" },
-  { name: "Air", icon: "☁️", value: "air" }
+  { name: "Land", icon: "🛣️", iconImage: "images/categories/land.png", value: "land" },
+  { name: "Water", icon: "🌊", iconImage: "images/categories/water.png", value: "water" },
+  { name: "Air", icon: "☁️", iconImage: "images/categories/air.png", value: "air" }
 ];
 
 const modeInfo = {
@@ -69,14 +79,14 @@ const els = {
   name: document.getElementById("vehicleName"), answers: document.getElementById("answers"),
   feedback: document.getElementById("feedback"), round: document.getElementById("roundLabel"),
   progress: document.getElementById("progressFill"), score: document.getElementById("scoreValue"),
-  stage: document.getElementById("vehicleStage"), listen: document.getElementById("listenBtn"),
+  stage: document.getElementById("vehicleStage"), listen: document.getElementById("listenBtn"), emojiToggle: document.getElementById("emojiToggle"),
   sound: document.getElementById("soundBtn"), finalScore: document.getElementById("finalScore"),
   totalQuestions: document.getElementById("totalQuestions"), definition: document.getElementById("vehicleDefinition"),
   stars: document.getElementById("bigStars"), resultMessage: document.getElementById("resultMessage"),
   confetti: document.getElementById("confetti"), scorePill: document.getElementById("scorePill")
 };
 
-let state = { mode: null, round: 0, score: 0, questions: [], answered: false, wrongThisRound: false, muted: false };
+let state = { mode: null, round: 0, score: 0, questions: [], answered: false, wrongThisRound: false, muted: false, identifyEmojis: true };
 let audioCtx;
 let activeClip;
 
@@ -148,6 +158,21 @@ function playVehicleSound(kind) {
   }
   const rings = document.querySelector(".sound-rings");
   rings.classList.add("playing");
+  if (kind === "rocket") {
+    const ctx = getAudio();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(100, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + .8);
+    gain.gain.setValueAtTime(.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .85);
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + .86);
+    setTimeout(() => rings.classList.remove("playing"), 900);
+    return;
+  }
   activeClip = new Audio(`audio/${kind}.mp3`);
   activeClip.volume = .85;
   activeClip.addEventListener("ended", () => rings.classList.remove("playing"), { once: true });
@@ -183,7 +208,9 @@ function startGame(mode) {
 }
 
 function renderQuestion() {
-  document.getElementById("gameCard").dataset.mode = state.mode;
+  const gameCard = document.getElementById("gameCard");
+  gameCard.dataset.mode = state.mode;
+  gameCard.classList.toggle("hide-answer-emojis", state.mode === "identify" && !state.identifyEmojis);
   state.answered = false;
   state.wrongThisRound = false;
   const total = state.questions.length;
@@ -204,6 +231,8 @@ function renderQuestion() {
   els.modeBadge.textContent = info.badge;
   els.helper.textContent = info.helper;
   els.listen.textContent = state.mode === "sound" ? "🔊 Play Sound" : "🔊 Listen";
+  els.emojiToggle.hidden = state.mode !== "identify";
+  els.emojiToggle.textContent = state.identifyEmojis ? "Turn off emojis" : "Turn on emojis";
 
   if (state.mode === "safety") renderSafety();
   else if (state.mode === "learn") renderLearn();
@@ -214,15 +243,23 @@ function renderQuestion() {
   setTimeout(() => state.mode === "sound" ? playCurrentAudio() : speakCurrentPrompt(), 260);
 }
 
+function vehicleEmojiPath(vehicle) {
+  const offset = Math.max(0, vehicles.indexOf(vehicle));
+  return vehicle.iconImages[(state.round + offset) % vehicle.iconImages.length];
+}
+
 function setVehicle(vehicle, showName = true) {
   clearVehiclePicture();
-  els.emoji.textContent = vehicle.icon;
+  els.emoji.textContent = "";
+  els.emoji.classList.add("vehicle-icon-image");
+  els.emoji.style.backgroundImage = `url("${vehicleEmojiPath(vehicle)}")`;
+  els.emoji.style.backgroundPosition = "center";
   els.name.textContent = showName ? vehicle.name.toUpperCase() : "?";
   els.stage.dataset.sound = vehicle.sound;
 }
 
 function clearVehiclePicture() {
-  els.emoji.classList.remove("vehicle-picture");
+  els.emoji.classList.remove("vehicle-picture", "vehicle-icon-image");
   els.emoji.style.backgroundImage = "";
   els.emoji.style.backgroundPosition = "";
 }
@@ -230,7 +267,7 @@ function clearVehiclePicture() {
 function setVehiclePicture(vehicle) {
   els.emoji.textContent = "";
   els.emoji.classList.add("vehicle-picture");
-  els.emoji.style.backgroundImage = `url("images/${vehicle.name.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "")}.webp")`;
+  els.emoji.style.backgroundImage = `url("${vehicleEmojiPath(vehicle)}")`;
   els.emoji.style.backgroundPosition = "center";
   els.name.textContent = "";
   els.stage.dataset.sound = "";
@@ -256,7 +293,7 @@ function renderSort() {
   els.question.textContent = `Where does the ${v.name} travel?`;
   setVehicle(v, true);
   const place = v.zone === "air" ? "in the air" : `on ${v.zone}`;
-  zones.forEach(z => makeAnswer(z.name, z.icon, z.value === v.zone, `A ${v.name} travels ${place}.`));
+  zones.forEach(z => makeAnswer(z.name, z.icon, z.value === v.zone, `A ${v.name} travels ${place}.`, false, z.iconImage));
 }
 
 function renderSound() {
@@ -292,12 +329,13 @@ function renderSafety() {
     .forEach(a => makeAnswer(a.label, a.icon, a.correct, item.explain));
 }
 
-function makeAnswer(label, icon, correct, explain, revealVehicle = false) {
+function makeAnswer(label, icon, correct, explain, revealVehicle = false, imagePath = "") {
   const btn = document.createElement("button");
   btn.className = "answer-btn";
   btn.dataset.correct = correct ? "true" : "false";
-  const iconMarkup = label === "jet ski"
-    ? '<img class="answer-photo-icon" src="images/jet_ski.webp" alt="">'
+  const vehicle = vehicles.find(candidate => candidate.name === label);
+  const iconMarkup = imagePath || vehicle
+    ? `<img class="answer-image-icon" src="${imagePath || vehicleEmojiPath(vehicle)}" alt="">`
     : icon;
   btn.innerHTML = `<span class="answer-icon">${iconMarkup}</span><span>${label}</span>`;
   btn.onclick = () => chooseAnswer(btn, correct, explain, revealVehicle);
@@ -375,7 +413,7 @@ function finishGame() {
   els.totalQuestions.textContent = total;
   const ratio = state.score / total;
   els.stars.textContent = ratio >= .85 ? "⭐⭐⭐" : ratio >= .55 ? "⭐⭐" : "⭐";
-  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : "You reviewed all 30 transportation words!";
+  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : `You reviewed all ${vehicles.length} transportation words!`;
   showScreen("results");
   speak(`Round complete! You got ${state.score} out of ${total}.`);
   burstConfetti();
@@ -408,6 +446,11 @@ document.getElementById("backMenuBtn").addEventListener("click", goHome);
 document.getElementById("chooseGameBtn").addEventListener("click", goHome);
 document.getElementById("playAgainBtn").addEventListener("click", () => startGame(state.mode));
 els.listen.addEventListener("click", playCurrentAudio);
+els.emojiToggle.addEventListener("click", () => {
+  state.identifyEmojis = !state.identifyEmojis;
+  document.getElementById("gameCard").classList.toggle("hide-answer-emojis", !state.identifyEmojis);
+  els.emojiToggle.textContent = state.identifyEmojis ? "Turn off emojis" : "Turn on emojis";
+});
 
 els.sound.addEventListener("click", () => {
   state.muted = !state.muted;

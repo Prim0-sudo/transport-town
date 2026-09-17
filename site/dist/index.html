@@ -7,7 +7,7 @@
   <meta name="description" content="A teacher-controlled kindergarten game for learning transportation vocabulary, sorting, sounds, and safety.">
   <title>Transport Town</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232457c5'/%3E%3Cpath d='M13 37h38l-5-14H24l-6 7h-5z' fill='%23ffd54a'/%3E%3Ccircle cx='22' cy='43' r='7' fill='%23232b45'/%3E%3Ccircle cx='44' cy='43' r='7' fill='%23232b45'/%3E%3Ccircle cx='22' cy='43' r='3' fill='white'/%3E%3Ccircle cx='44' cy='43' r='3' fill='white'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20260916">
+  <link rel="stylesheet" href="styles.css?v=20260917-emoji-library">
 </head>
 <body>
   <div class="backdrop" aria-hidden="true"></div>
@@ -72,7 +72,10 @@
       <div class="game-card" id="gameCard">
         <div class="prompt-row">
           <span class="mode-badge" id="modeBadge">SORTING</span>
-          <button class="listen-btn" id="listenBtn">🔊 Listen</button>
+          <div class="prompt-actions">
+            <button class="emoji-toggle-btn" id="emojiToggle" hidden>Turn off emojis</button>
+            <button class="listen-btn" id="listenBtn">🔊 Listen</button>
+          </div>
         </div>
         <h2 id="questionText">Where does the bus go?</h2>
         <p class="question-helper" id="questionHelper">Point, call out the answer, then choose!</p>
@@ -114,6 +117,6 @@
   </main>
 
   <div class="confetti" id="confetti" aria-hidden="true"></div>
-  <script src="app.js?v=20260916-3"></script>
+  <script src="app.js?v=20260917-emoji-library"></script>
 </body>
 </html>
