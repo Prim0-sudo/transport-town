@@ -724,11 +724,17 @@ function burstConfetti(pieceCount = 55) {
 function goHome() {
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if (activeClip) activeClip.pause();
+  document.getElementById("homeScreen").classList.remove("menu-open");
   showScreen("home");
+}
+
+function openGameMenu() {
+  document.getElementById("homeScreen").classList.add("menu-open");
 }
 
 document.querySelectorAll(".mode-card").forEach(btn => btn.addEventListener("click", () => startGame(btn.dataset.mode)));
 document.getElementById("homeBtn").addEventListener("click", goHome);
+document.getElementById("openGamesBtn").addEventListener("click", openGameMenu);
 document.getElementById("backMenuBtn").addEventListener("click", goHome);
 document.getElementById("chooseGameBtn").addEventListener("click", goHome);
 document.getElementById("playAgainBtn").addEventListener("click", () => startGame(state.mode));

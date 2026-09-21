@@ -118,6 +118,32 @@ button:focus-visible {
   display: none;
 }
 
+.home-launch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 30px;
+  padding: 22px 34px 16px;
+  background: rgba(255,255,255,.94);
+  box-shadow: var(--shadow);
+  color: var(--blue);
+  font-size: clamp(1.7rem, 4vw, 3.2rem);
+  font-weight: 1000;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.home-launch .brand-mark { width: 78px; height: 78px; border-radius: 22px; font-size: 3rem; }
+.home-launch small { color: #62769c; font-size: .95rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+.home-launch:hover { transform: scale(1.05); filter: brightness(1.03); }
+.home-screen.menu-open .home-launch { display: none; }
+.home-screen:not(.menu-open) .mode-grid,
+.home-screen:not(.menu-open) .home-parade { display: none; }
+body:has(.home-screen.active:not(.menu-open)) .topbar { justify-content: flex-end; }
+body:has(.home-screen.active:not(.menu-open)) .topbar .brand { display: none; }
+
 .eyebrow {
   display: inline-block;
   padding: 7px 14px;
@@ -546,6 +572,8 @@ kbd { min-width: 24px; padding: 2px 6px; border-radius: 5px; color: #273157; bac
   .topbar { min-height: 58px; }
   .brand { padding: 5px 12px 5px 6px; }
   .brand-mark { width: 40px; height: 40px; }
+  .home-launch { padding: 18px 26px 14px; font-size: 1.8rem; }
+  .home-launch .brand-mark { width: 68px; height: 68px; font-size: 2.6rem; }
   .icon-btn { width: 46px; height: 46px; }
   .mode-grid { grid-template-columns: 1fr; gap: 11px; }
   .mode-card { min-height: 88px; grid-template-columns: 58px 1fr 24px; border-width: 4px; border-radius: 20px; padding: 10px 14px; }
