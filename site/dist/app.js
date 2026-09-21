@@ -84,12 +84,13 @@ const els = {
   sound: document.getElementById("soundBtn"), finalScore: document.getElementById("finalScore"),
   totalQuestions: document.getElementById("totalQuestions"), definition: document.getElementById("vehicleDefinition"),
   stars: document.getElementById("bigStars"), resultMessage: document.getElementById("resultMessage"),
-  confetti: document.getElementById("confetti"), scorePill: document.getElementById("scorePill")
+  confetti: document.getElementById("confetti"), scorePill: document.getElementById("scorePill"), hangmanWin: document.getElementById("hangmanWinEmojis"), hangmanSadRain: document.getElementById("hangmanSadRain")
 };
 
 let state = { mode: null, round: 0, score: 0, questions: [], answered: false, wrongThisRound: false, muted: false, identifyEmojis: true };
 let audioCtx;
 let activeClip;
+const SCOOPS_PER_CONE = 5;
 
 function shuffled(items) {
   const copy = [...items];
@@ -202,7 +203,7 @@ function startGame(mode) {
   else if (mode === "sort") questions = shuffled(vehicles);
   else if (mode === "learn") questions = [...vehicles];
   else if (mode === "identify") questions = shuffled(vehicles).map(vehicle => ({ vehicle, choices: identifyChoices(vehicle) }));
-  else if (mode === "hangman") questions = shuffled(vehicles).slice(0, 10).map(vehicle => ({ vehicle, guessed: [], misses: 0 }));
+  else if (mode === "hangman") questions = shuffled(vehicles).slice(0, 10).map(vehicle => ({ vehicle, guessed: [], misses: 0, sadConeIndex: null }));
   else questions = shuffled(listeningVehicles);
   state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false };
   showScreen("game");
@@ -218,6 +219,8 @@ function renderQuestion() {
   const total = state.questions.length;
   els.feedback.textContent = "";
   els.feedback.className = "feedback";
+  els.hangmanWin.hidden = true;
+  els.hangmanSadRain.hidden = true;
   const longRound = state.mode === "sort" || state.mode === "sound" || state.mode === "identify" || state.mode === "hangman";
   els.round.textContent = `${state.round + 1}/${total}`;
   els.progress.style.width = `${(state.round / total) * 100}%`;
@@ -338,6 +341,43 @@ function hangmanLetters(name) {
   return name.toLowerCase().replace(/[^a-z]/g, "");
 }
 
+function showSadConeForThreeSeconds(item, coneIndex) {
+  const round = state.round;
+  item.sadConeIndex = coneIndex;
+  setTimeout(() => {
+    if (state.mode === "hangman" && state.round === round && state.questions[round] === item && item.sadConeIndex === coneIndex) {
+      item.sadConeIndex = null;
+      renderHangman();
+    }
+  }, 3000);
+}
+
+function showHangmanWinSequence(item) {
+  const round = state.round;
+  setTimeout(() => {
+    if (state.mode === "hangman" && state.round === round && state.questions[round] === item && state.answered) {
+      item.winCelebration = true;
+      renderHangman();
+      els.hangmanWin.hidden = false;
+      setTimeout(() => {
+        if (state.mode === "hangman" && state.round === round && state.questions[round] === item && state.answered) {
+          els.hangmanWin.hidden = true;
+        }
+      }, 3000);
+    }
+  }, 2500);
+}
+
+function showHangmanSadRain(item) {
+  const round = state.round;
+  els.hangmanSadRain.hidden = false;
+  setTimeout(() => {
+    if (state.mode === "hangman" && state.round === round && state.questions[round] === item && state.answered) {
+      els.hangmanSadRain.hidden = true;
+    }
+  }, 2500);
+}
+
 function renderHangman() {
   const item = state.questions[state.round];
   const v = item.vehicle;
@@ -355,8 +395,22 @@ function renderHangman() {
     return `<span class="hangman-letter">${shown ? character : ""}</span>`;
   }).join("");
   const scoopFlavors = ["strawberry", "vanilla", "mint"];
-  const scoops = Array.from({ length: scoopCount - item.misses }, (_, index) => `<i class="ice-cream-scoop ice-cream-scoop-${scoopFlavors[index % scoopFlavors.length]}" style="--scoop-index:${index}" aria-hidden="true"></i>`).join("");
-  const iceCreamMarkup = `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${scoopCount - item.misses} of ${scoopCount}"><div class="ice-cream-scene"><span class="ice-cream-cone" aria-hidden="true"></span><span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div></div>`;
+  const scoopsRemaining = scoopCount - item.misses;
+  const cones = Array.from({ length: Math.ceil(scoopCount / SCOOPS_PER_CONE) }, (_, coneIndex) => {
+    const coneCapacity = Math.min(SCOOPS_PER_CONE, scoopCount - coneIndex * SCOOPS_PER_CONE);
+    const scoopsOnCone = Math.min(coneCapacity, Math.max(0, scoopsRemaining - coneIndex * SCOOPS_PER_CONE));
+    const scoops = Array.from({ length: scoopsOnCone }, (_, scoopIndex) => {
+      const index = coneIndex * SCOOPS_PER_CONE + scoopIndex;
+      return `<i class="ice-cream-scoop ice-cream-scoop-${scoopFlavors[index % scoopFlavors.length]}" style="--scoop-index:${index}" aria-hidden="true"></i>`;
+    }).join("");
+    const coneMarkup = scoopsOnCone > 0
+      ? '<span class="ice-cream-cone" aria-hidden="true"></span>'
+      : item.sadConeIndex === coneIndex ? '<span class="ice-cream-sad-face" role="img" aria-label="Sad face">😢</span>' : "";
+    return `<div class="ice-cream-scene">${coneMarkup}<span class="ice-cream-stack" aria-hidden="true">${scoops}</span></div>`;
+  }).join("");
+  const iceCreamMarkup = item.winCelebration
+    ? '<div class="ice-cream-meltdown ice-cream-meltdown-cleared" aria-label="Ice cream celebration"></div>'
+    : `<div class="ice-cream-meltdown" aria-label="Ice cream scoops remaining: ${scoopsRemaining} of ${scoopCount}"><div class="ice-cream-scenes">${cones}</div></div>`;
   const keyboard = "abcdefghijklmnopqrstuvwxyz".split("").map(letter => {
     const wasGuessed = guessed.has(letter);
     const isCorrect = letters.includes(letter);
@@ -374,7 +428,11 @@ function chooseHangmanLetter(letter) {
   item.guessed.push(letter);
   const letters = hangmanLetters(item.vehicle.name);
   const correct = letters.includes(letter);
+  const scoopsBefore = letters.length - item.misses;
   if (!correct) item.misses++;
+  const lostCone = !correct && scoopsBefore > 0 && (scoopsBefore - 1) % SCOOPS_PER_CONE === 0;
+  const lostConeIndex = lostCone ? Math.floor((scoopsBefore - 1) / SCOOPS_PER_CONE) : null;
+  if (lostCone) showSadConeForThreeSeconds(item, lostConeIndex);
   const complete = [...letters].every(character => item.guessed.includes(character));
   if (complete || item.misses >= letters.length) {
     state.answered = true;
@@ -385,6 +443,8 @@ function chooseHangmanLetter(letter) {
     els.feedback.innerHTML = `<button class="next-btn" id="nextBtn" aria-label="Next word">➜</button>`;
     speak(complete ? `Correct. ${item.vehicle.name}.` : item.vehicle.name);
     if (complete) { tone(523, 0, .16); tone(659, .16, .16); tone(784, .32, .28); }
+    if (complete) { burstConfetti(); showHangmanWinSequence(item); }
+    else showHangmanSadRain(item);
     document.getElementById("nextBtn").onclick = nextQuestion;
     return;
   }
