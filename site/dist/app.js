@@ -397,7 +397,7 @@ function spinWheel() {
       game.selected = game.landing;
       game.landing = null;
       renderWheel();
-    }, 700);
+    }, 1400);
   }, 4200);
 }
 

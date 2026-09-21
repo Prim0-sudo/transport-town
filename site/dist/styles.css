@@ -452,7 +452,7 @@ button:focus-visible {
 .game-card[data-mode="wheel"] .answers { display: block; width: 100%; }
 .wheel-stage { position: relative; display: grid; justify-items: center; width: 100%; padding: 12px 0; }
 .wheel-wrap { position: relative; }
-.vocab-wheel { position: relative; width: min(78vw, calc(100vh - 205px), 820px); aspect-ratio: 1; border: 9px solid white; border-radius: 50%; background: var(--wheel-background); box-shadow: 0 9px 0 #506b99, 0 16px 30px rgba(20,50,97,.24); overflow: hidden; }
+.vocab-wheel { position: relative; width: min(78vw, calc(100vh - 205px), 820px); aspect-ratio: 1; border: 9px solid white; border-radius: 50%; background: var(--wheel-background); box-shadow: 0 9px 0 #506b99, 0 16px 30px rgba(20,50,97,.24); overflow: hidden; transform: rotate(var(--wheel-rotation, 0deg)); }
 .wheel-pointer { position: absolute; z-index: 4; top: 50%; right: -42px; color: #f24355; font-size: 3.4rem; line-height: 1; text-shadow: 0 3px 0 white; transform: translateY(-50%); }
 .wheel-segment-emoji { position: absolute; z-index: 1; top: var(--y); left: var(--x); font-size: clamp(1.1rem, 2.5vw, 2.2rem); line-height: 1; pointer-events: none; transform: translate(-50%, -50%) rotate(var(--segment-angle)) translateX(78px) rotate(var(--counter-angle)) rotate(var(--emoji-rotation)); filter: drop-shadow(0 2px 1px rgba(20,50,97,.2)); }
 .wheel-hub { position: absolute; z-index: 2; top: 50%; left: 50%; display: grid; width: clamp(74px, 11vw, 110px); height: clamp(74px, 11vw, 110px); place-items: center; border: 6px solid white; border-radius: 50%; background: #34528f; color: white; font-size: clamp(1rem, 2vw, 1.35rem); font-weight: 1000; transform: translate(-50%, -50%); box-shadow: 0 4px 0 #1d376d; cursor: pointer; }
