@@ -92,6 +92,7 @@ const els = {
 let state = { mode: null, round: 0, score: 0, questions: [], answered: false, wrongThisRound: false, muted: false, identifyEmojis: true };
 let audioCtx;
 let activeClip;
+let wheelTickTimers = [];
 const SCOOPS_PER_CONE = 5;
 
 function shuffled(items) {
@@ -152,6 +153,27 @@ function noise(start, duration, volume = .07) {
   source.buffer = buffer;
   source.connect(gain).connect(ctx.destination);
   source.start(ctx.currentTime + start);
+}
+
+function wheelTick() {
+  tone(1100, 0, .025, "square", .035);
+}
+
+function scheduleWheelTicks(duration = 4200) {
+  wheelTickTimers.forEach(timer => clearTimeout(timer));
+  wheelTickTimers = [];
+  const tickCount = 34;
+  const weights = Array.from({ length: tickCount }, (_, index) => 1 + 7 * (index / (tickCount - 1)) ** 2);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  let elapsed = 0;
+  wheelTick();
+  weights.forEach((weight, index) => {
+    elapsed += duration * weight / totalWeight;
+    if (index === tickCount - 1) return;
+    wheelTickTimers.push(setTimeout(() => {
+      if (state.mode === "wheel" && state.wheel?.spinning) wheelTick();
+    }, elapsed));
+  });
 }
 
 function identifyChoices(vehicle) {
@@ -365,6 +387,7 @@ function spinWheel() {
   game.spinning = true;
   game.returning = false;
   renderWheel();
+  scheduleWheelTicks(4200);
   setTimeout(() => {
     game.spinning = false;
     game.landing = game.pending;
