@@ -175,6 +175,10 @@ button:focus-visible {
 .mode-card.purple { background: #cbb8ff; }
 .mode-card.red { background: #ff8a7e; }
 .mode-card.orange { background: #ffbd72; }
+.mode-card.pink { background: #ffafd2; }
+.mode-card.locked { cursor: not-allowed; filter: saturate(.55); opacity: .72; }
+.mode-card.locked .mode-arrow { opacity: .35; }
+.mode-text em { display: block; margin-top: 3px; font-size: .78rem; font-style: normal; font-weight: 800; }
 
 .mode-icon {
   width: 60px;
@@ -420,6 +424,28 @@ button:focus-visible {
 .game-card[data-mode="hangman"] h2 { display: none; }
 .game-card[data-mode="hangman"] .vehicle-stage { display: none; }
 .game-card[data-mode="hangman"] .answers { display: block; }
+.game-card[data-mode="flip"] { min-height: 0; padding: 14px 18px 18px; }
+.game-card[data-mode="flip"] h2 { display: none; }
+.game-card[data-mode="flip"] .vehicle-stage { display: none; }
+.game-card[data-mode="flip"] .answers { display: block; width: 100%; }
+.flip-setup { max-width: 720px; margin: 42px auto; text-align: center; color: #465878; font-size: 1.25rem; font-weight: 800; }
+.flip-choice-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 24px; }
+.flip-choice { min-width: 160px; min-height: 116px; border: 4px solid white; border-radius: 24px; background: #ffafd2; color: var(--ink); box-shadow: 0 6px 0 #df6f9e; font-size: 2.2rem; font-weight: 1000; cursor: pointer; }
+.flip-choice:hover { transform: translateY(-3px); filter: brightness(1.04); }
+.flip-choice span { display: block; margin-top: 6px; font-size: 1rem; }
+.flip-board { width: min(960px, 100%); margin: 0 auto; display: grid; gap: 10px; }
+.flip-board-20 { grid-template-columns: repeat(5, minmax(110px, 1fr)); }
+.flip-board-40 { grid-template-columns: repeat(8, minmax(90px, 1fr)); }
+.flip-board-60 { grid-template-columns: repeat(10, minmax(76px, 1fr)); }
+.flip-tile { min-height: 108px; border: 0; padding: 0; border-radius: 14px; background: transparent; perspective: 600px; cursor: pointer; }
+.flip-board-20 .flip-tile, .flip-board-20 .flip-tile-inner { min-height: 132px; }
+.flip-tile-inner { position: relative; display: block; width: 100%; height: 100%; min-height: 108px; transform-style: preserve-3d; transition: transform .36s ease; }
+.flip-tile.flipped .flip-tile-inner { transform: rotateY(180deg); }
+.flip-tile-back, .flip-tile-front { position: absolute; inset: 0; display: grid; place-items: center; border: 3px solid white; border-radius: 14px; backface-visibility: hidden; box-shadow: 0 4px 0 rgba(55,84,130,.22); }
+.flip-tile-back { background: #799ce4; color: white; font-size: 2.25rem; font-weight: 1000; }
+.flip-tile-front { align-content: center; gap: 3px; padding: 7px 4px; background: #fff8fc; color: var(--ink); transform: rotateY(180deg); font-size: .78rem; line-height: 1; text-transform: uppercase; }
+.flip-tile-front img { width: 36px; height: 36px; object-fit: contain; }
+.flip-tile.matched .flip-tile-front { background: #d9f7e4; border-color: #4dbf7b; }
 .hangman-board { width: min(760px, 100%); margin: 0 auto; text-align: center; }
 .ice-cream-meltdown { display: flex; justify-content: center; height: clamp(250px, 34vh, 300px); margin: 0 0 8px; overflow: hidden; }
 .ice-cream-scenes { display: flex; justify-content: center; gap: 16px; max-width: 100%; }
@@ -516,6 +542,10 @@ kbd { min-width: 24px; padding: 2px 6px; border-radius: 5px; color: #273157; bac
   .hangman-keys { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
   .hangman-key { min-height: 40px; font-size: 1rem; }
   .hangman-letter { width: 31px; height: 43px; border-bottom-width: 4px; }
+  .flip-board-20 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .flip-board-40 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .flip-board-60 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .flip-tile, .flip-tile-inner, .flip-board-20 .flip-tile, .flip-board-20 .flip-tile-inner { min-height: 82px; }
 }
 
 @media (max-height: 820px) and (min-width: 761px) {

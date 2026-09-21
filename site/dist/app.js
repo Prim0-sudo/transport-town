@@ -66,7 +66,8 @@ const modeInfo = {
   sound: { badge: "LISTENING", title: "Which vehicle makes this sound?", helper: "" },
   identify: { badge: "WHICH ONE IS IT?", title: "", helper: "" },
   safety: { badge: "ROAD SAFETY", title: "", helper: "" },
-  hangman: { badge: "ICE CREAM MELTDOWN", title: "", helper: "" }
+  hangman: { badge: "ICE CREAM MELTDOWN", title: "", helper: "" },
+  flip: { badge: "FLIP THE TILES", title: "", helper: "" }
 };
 
 const screens = {
@@ -152,35 +153,6 @@ function noise(start, duration, volume = .07) {
   source.start(ctx.currentTime + start);
 }
 
-function playVehicleSound(kind) {
-  if (state.muted || !kind) return;
-  if (activeClip) {
-    activeClip.pause();
-    activeClip.currentTime = 0;
-  }
-  const rings = document.querySelector(".sound-rings");
-  rings.classList.add("playing");
-  if (kind === "rocket") {
-    const ctx = getAudio();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = "sawtooth";
-    oscillator.frequency.setValueAtTime(100, ctx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + .8);
-    gain.gain.setValueAtTime(.05, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .85);
-    oscillator.connect(gain).connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + .86);
-    setTimeout(() => rings.classList.remove("playing"), 900);
-    return;
-  }
-  activeClip = new Audio(`audio/${kind}.mp3`);
-  activeClip.volume = .85;
-  activeClip.addEventListener("ended", () => rings.classList.remove("playing"), { once: true });
-  activeClip.play().catch(() => rings.classList.remove("playing"));
-}
-
 function identifyChoices(vehicle) {
   const choices = [vehicle];
   ["land", "water", "air"].filter(zone => zone !== vehicle.zone).forEach(zone => {
@@ -198,14 +170,16 @@ function identifyQuestion(choices) {
 }
 
 function startGame(mode) {
+  if (mode === "sound") return;
   let questions;
   if (mode === "safety") questions = shuffled(safetyQuestions).slice(0, 7);
   else if (mode === "sort") questions = shuffled(vehicles);
   else if (mode === "learn") questions = [...vehicles];
   else if (mode === "identify") questions = shuffled(vehicles).map(vehicle => ({ vehicle, choices: identifyChoices(vehicle) }));
   else if (mode === "hangman") questions = shuffled(vehicles).slice(0, 10).map(vehicle => ({ vehicle, guessed: [], misses: 0, sadConeIndex: null }));
+  else if (mode === "flip") questions = [];
   else questions = shuffled(listeningVehicles);
-  state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false };
+  state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false, flip: null };
   showScreen("game");
   renderQuestion();
 }
@@ -241,6 +215,11 @@ function renderQuestion() {
   els.emojiToggle.title = state.identifyEmojis ? "Hide answer pictures" : "Show answer pictures";
   els.emojiToggle.setAttribute("aria-label", els.emojiToggle.title);
 
+  if (state.mode === "flip") {
+    renderFlipSetup();
+    return;
+  }
+
   if (state.mode === "safety") renderSafety();
   else if (state.mode === "learn") renderLearn();
   else if (state.mode === "sort") renderSort();
@@ -249,6 +228,86 @@ function renderQuestion() {
   else renderSound();
 
   setTimeout(() => state.mode === "sound" ? playCurrentAudio() : speakCurrentPrompt(), 260);
+}
+
+function renderFlipSetup() {
+  clearVehiclePicture();
+  els.emoji.textContent = "🃏";
+  els.name.textContent = "MATCHING GAME";
+  els.stage.dataset.sound = "";
+  els.question.textContent = "How many vocabulary words would you like?";
+  els.round.textContent = "CHOOSE";
+  els.progress.style.width = "0%";
+  els.answers.innerHTML = `<div class="flip-setup"><p>Each word has two matching tiles.</p><div class="flip-choice-row"><button class="flip-choice" data-count="10">10 words<span>20 tiles</span></button><button class="flip-choice" data-count="20">20 words<span>40 tiles</span></button><button class="flip-choice" data-count="30">30 words<span>60 tiles</span></button></div></div>`;
+  els.answers.querySelectorAll("[data-count]").forEach(button => button.addEventListener("click", () => startFlipGame(Number(button.dataset.count))));
+}
+
+function startFlipGame(vocabularyCount) {
+  const vocabulary = shuffled(vehicles).slice(0, vocabularyCount);
+  const tiles = shuffled(vocabulary.flatMap((vehicle, pairIndex) => [
+    { id: `${pairIndex}-a`, vehicle, flipped: false, matched: false },
+    { id: `${pairIndex}-b`, vehicle, flipped: false, matched: false }
+  ]));
+  state.questions = vocabulary;
+  state.flip = { tiles, firstTileId: null, locked: false, matches: 0 };
+  state.score = 0;
+  renderFlipGame();
+}
+
+function renderFlipGame() {
+  const { tiles, matches } = state.flip;
+  clearVehiclePicture();
+  els.emoji.textContent = "";
+  els.name.textContent = "";
+  els.stage.dataset.sound = "";
+  els.question.textContent = "";
+  els.round.textContent = `MATCHES ${matches}/${state.questions.length}`;
+  els.progress.style.width = `${(matches / state.questions.length) * 100}%`;
+  els.score.textContent = matches;
+  els.answers.innerHTML = `<div class="flip-board flip-board-${tiles.length}" aria-label="Vocabulary matching tiles">${tiles.map(tile => `<button class="flip-tile ${tile.flipped || tile.matched ? "flipped" : ""} ${tile.matched ? "matched" : ""}" data-tile-id="${tile.id}" ${tile.matched ? "disabled" : ""} aria-label="${tile.flipped || tile.matched ? tile.vehicle.name : "Hidden tile"}"><span class="flip-tile-inner"><span class="flip-tile-back">?</span><span class="flip-tile-front"><img src="${vehicleEmojiPath(tile.vehicle)}" alt=""><strong>${tile.vehicle.name}</strong></span></span></button>`).join("")}</div>`;
+  els.answers.querySelectorAll("[data-tile-id]").forEach(tile => tile.addEventListener("click", () => flipTile(tile.dataset.tileId)));
+}
+
+function flipTile(tileId) {
+  const game = state.flip;
+  const tile = game.tiles.find(candidate => candidate.id === tileId);
+  if (!tile || game.locked || tile.flipped || tile.matched) return;
+  tile.flipped = true;
+  if (!game.firstTileId) {
+    game.firstTileId = tileId;
+    renderFlipGame();
+    return;
+  }
+  const firstTile = game.tiles.find(candidate => candidate.id === game.firstTileId);
+  game.locked = true;
+  const isMatch = firstTile.vehicle.name === tile.vehicle.name;
+  renderFlipGame();
+  setTimeout(() => {
+    if (isMatch) {
+      firstTile.matched = true;
+      tile.matched = true;
+      game.matches++;
+      state.score = game.matches;
+      tone(523, 0, .16); tone(659, .16, .16);
+      burstConfetti(game.matches === state.questions.length ? 275 : 55);
+    } else {
+      firstTile.flipped = false;
+      tile.flipped = false;
+      tone(180, 0, .18, "sine", .08);
+    }
+    game.firstTileId = null;
+    game.locked = false;
+    if (game.matches === state.questions.length) {
+      state.answered = true;
+      renderFlipGame();
+      els.feedback.className = "feedback good";
+      els.feedback.innerHTML = '<button class="next-btn" id="nextBtn" aria-label="Finish game">➜</button>';
+      document.getElementById("nextBtn").onclick = finishGame;
+      speak("You found every match!");
+      return;
+    }
+    renderFlipGame();
+  }, 700);
 }
 
 function vehicleEmojiPath(vehicle) {
@@ -291,7 +350,7 @@ function renderLearn() {
     <button class="answer-btn" data-action="word"><span class="answer-icon">🗣️</span><span>Say: ${v.name}</span></button>
     <button class="answer-btn" data-action="clue"><span class="answer-icon">💡</span><span>Hear the meaning</span></button>
     <button class="answer-btn" data-action="next"><span class="answer-icon">➡️</span><span>Next vehicle</span></button>`;
-  els.answers.querySelector('[data-action="word"]').onclick = () => { speak(v.name); playVehicleSound(v.sound); };
+  els.answers.querySelector('[data-action="word"]').onclick = () => speak(v.name);
   els.answers.querySelector('[data-action="clue"]').onclick = () => speak(v.definition);
   els.answers.querySelector('[data-action="next"]').onclick = () => { state.score++; nextQuestion(); };
 }
@@ -513,6 +572,7 @@ function currentPrompt() {
     return identifyQuestion(item.choices);
   }
   if (state.mode === "hangman") return "";
+  if (state.mode === "flip") return "";
   const v = state.questions[state.round];
   if (state.mode === "learn") return `This is a ${v.name}.`;
   if (state.mode === "sort") return `Where does the ${v.name} travel? Land, water, or air?`;
@@ -522,13 +582,7 @@ function currentPrompt() {
 function speakCurrentPrompt() { speak(currentPrompt()); }
 
 function playCurrentAudio() {
-  if (state.mode === "sound") {
-    speak("Listen carefully.");
-    setTimeout(() => playVehicleSound(els.stage.dataset.sound), 700);
-  } else {
-    speakCurrentPrompt();
-    if (state.mode !== "safety" && state.mode !== "learn") setTimeout(() => playVehicleSound(els.stage.dataset.sound), 650);
-  }
+  speakCurrentPrompt();
 }
 
 function finishGame() {
@@ -538,16 +592,16 @@ function finishGame() {
   els.totalQuestions.textContent = total;
   const ratio = state.score / total;
   els.stars.textContent = ratio >= .85 ? "⭐⭐⭐" : ratio >= .55 ? "⭐⭐" : "⭐";
-  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : state.mode === "hangman" ? "You built transport words before the ice cream melted!" : `You reviewed all ${vehicles.length} transportation words!`;
+  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : state.mode === "hangman" ? "You built transport words before the ice cream melted!" : state.mode === "flip" ? "You found every vocabulary match!" : `You reviewed all ${vehicles.length} transportation words!`;
   showScreen("results");
   speak(`Round complete! You got ${state.score} out of ${total}.`);
-  burstConfetti();
+  if (state.mode !== "flip") burstConfetti();
 }
 
-function burstConfetti() {
+function burstConfetti(pieceCount = 55) {
   els.confetti.innerHTML = "";
   const colors = ["#ffd54a", "#ef5b5b", "#37b56c", "#52bff2", "#8b65d8"];
-  for (let i = 0; i < 55; i++) {
+  for (let i = 0; i < pieceCount; i++) {
     const piece = document.createElement("i");
     piece.className = "confetti-piece";
     piece.style.left = `${Math.random() * 100}%`;
