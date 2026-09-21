@@ -67,7 +67,8 @@ const modeInfo = {
   identify: { badge: "WHICH ONE IS IT?", title: "", helper: "" },
   safety: { badge: "ROAD SAFETY", title: "", helper: "" },
   hangman: { badge: "ICE CREAM MELTDOWN", title: "", helper: "" },
-  flip: { badge: "FLIP THE TILES", title: "", helper: "" }
+  flip: { badge: "FLIP THE TILES", title: "", helper: "" },
+  wheel: { badge: "SPIN THE WHEEL", title: "", helper: "" }
 };
 
 const screens = {
@@ -178,8 +179,9 @@ function startGame(mode) {
   else if (mode === "identify") questions = shuffled(vehicles).map(vehicle => ({ vehicle, choices: identifyChoices(vehicle) }));
   else if (mode === "hangman") questions = shuffled(vehicles).slice(0, 10).map(vehicle => ({ vehicle, guessed: [], misses: 0, sadConeIndex: null }));
   else if (mode === "flip") questions = [];
+  else if (mode === "wheel") questions = shuffled(vehicles);
   else questions = shuffled(listeningVehicles);
-  state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false, flip: null };
+  state = { ...state, mode, round: 0, score: 0, questions, answered: false, wrongThisRound: false, flip: null, wheel: mode === "wheel" ? { remaining: [...questions], selected: null, landing: null, spinning: false, returning: false } : null };
   showScreen("game");
   renderQuestion();
 }
@@ -217,6 +219,10 @@ function renderQuestion() {
 
   if (state.mode === "flip") {
     renderFlipSetup();
+    return;
+  }
+  if (state.mode === "wheel") {
+    renderWheel();
     return;
   }
 
@@ -308,6 +314,84 @@ function flipTile(tileId) {
     }
     renderFlipGame();
   }, 700);
+}
+
+function wheelColors(count) {
+  const colors = ["#ffd54a", "#ff9d7b", "#a4e57b", "#75c9ff", "#c7a8ff", "#ffb6dc"];
+  const slice = 360 / count;
+  return `conic-gradient(from -90deg, ${Array.from({ length: count }, (_, index) => `${colors[index % colors.length]} ${index * slice}deg ${(index + 1) * slice}deg`).join(", ")})`;
+}
+
+function renderWheel() {
+  const game = state.wheel;
+  const total = state.questions.length;
+  const wordsRead = total - game.remaining.length;
+  clearVehiclePicture();
+  els.emoji.textContent = "";
+  els.name.textContent = "";
+  els.stage.dataset.sound = "";
+  els.question.textContent = "";
+  els.round.textContent = `WORDS ${wordsRead}/${total}`;
+  els.progress.style.width = `${(wordsRead / total) * 100}%`;
+  els.score.textContent = wordsRead;
+  if (game.selected) {
+    els.answers.innerHTML = `<div class="wheel-reveal"><strong>${game.selected.name}</strong><p>Read the word together.</p><button class="next-btn" id="wheelNextBtn">Next ➜</button></div>`;
+    document.getElementById("wheelNextBtn").onclick = nextWheelWord;
+    return;
+  }
+  const count = game.remaining.length;
+  const slice = 360 / count;
+  const segmentEmojis = game.remaining.map((vehicle, index) => {
+    const angle = -90 + (index + .5) * slice;
+    const radians = angle * Math.PI / 180;
+    const x = 50 + 34 * Math.cos(radians);
+    const y = 50 + 34 * Math.sin(radians);
+    const rotation = game.spinning ? -(game.rotation || 0) : 0;
+    return `<span class="wheel-segment-emoji" style="--x:${x}%; --y:${y}%; --segment-angle:${angle}deg; --counter-angle:${-angle}deg; --emoji-rotation:${rotation}deg" aria-hidden="true">${vehicle.icon || "🛥️"}</span>`;
+  }).join("");
+  const spinClass = game.spinning ? "spinning" : game.returning ? "returning" : "";
+  const landingWord = game.landing ? `<div class="wheel-landing-word">${game.landing.name}</div>` : "";
+  els.answers.innerHTML = `<div class="wheel-stage"><div class="wheel-wrap"><div class="vocab-wheel ${spinClass}" style="--wheel-background:${wheelColors(count)}; --wheel-rotation:${game.rotation || 0}deg">${segmentEmojis}<button class="wheel-hub" id="wheelSpinBtn" ${game.spinning || game.landing ? "disabled" : ""} aria-label="${game.spinning ? "Wheel is spinning" : "Spin the wheel"}">${game.spinning ? "…" : "SPIN"}</button></div><div class="wheel-pointer" aria-hidden="true">◀</div>${landingWord}</div></div>`;
+  document.getElementById("wheelSpinBtn").onclick = spinWheel;
+}
+
+function spinWheel() {
+  const game = state.wheel;
+  if (game.spinning || !game.remaining.length) return;
+  const selectedIndex = Math.floor(Math.random() * game.remaining.length);
+  const slice = 360 / game.remaining.length;
+  game.pending = game.remaining[selectedIndex];
+  game.rotation = 2610 - (selectedIndex * slice + slice / 2);
+  game.spinning = true;
+  game.returning = false;
+  renderWheel();
+  setTimeout(() => {
+    game.spinning = false;
+    game.landing = game.pending;
+    game.pending = null;
+    renderWheel();
+    setTimeout(() => {
+      game.selected = game.landing;
+      game.landing = null;
+      renderWheel();
+    }, 700);
+  }, 4200);
+}
+
+function nextWheelWord() {
+  const game = state.wheel;
+  game.remaining = game.remaining.filter(vehicle => vehicle !== game.selected);
+  game.selected = null;
+  state.score++;
+  if (!game.remaining.length) {
+    finishGame();
+    return;
+  }
+  game.returning = true;
+  renderWheel();
+  setTimeout(() => {
+    if (state.mode === "wheel" && !state.wheel.selected) state.wheel.returning = false;
+  }, 450);
 }
 
 function vehicleEmojiPath(vehicle) {
@@ -573,6 +657,7 @@ function currentPrompt() {
   }
   if (state.mode === "hangman") return "";
   if (state.mode === "flip") return "";
+  if (state.mode === "wheel") return "";
   const v = state.questions[state.round];
   if (state.mode === "learn") return `This is a ${v.name}.`;
   if (state.mode === "sort") return `Where does the ${v.name} travel? Land, water, or air?`;
@@ -592,7 +677,7 @@ function finishGame() {
   els.totalQuestions.textContent = total;
   const ratio = state.score / total;
   els.stars.textContent = ratio >= .85 ? "⭐⭐⭐" : ratio >= .55 ? "⭐⭐" : "⭐";
-  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "sound" ? "Your listening ears worked hard!" : state.mode === "identify" ? "You identified all the transportation pictures!" : state.mode === "hangman" ? "You built transport words before the ice cream melted!" : state.mode === "flip" ? "You found every vocabulary match!" : `You reviewed all ${vehicles.length} transportation words!`;
+  els.resultMessage.textContent = state.mode === "safety" ? "You made safe travel choices!" : state.mode === "sort" ? "You know where vehicles travel!" : state.mode === "identify" ? "You identified all the transportation pictures!" : state.mode === "hangman" ? "You built transport words before the ice cream melted!" : state.mode === "flip" ? "You found every vocabulary match!" : state.mode === "wheel" ? "You practised every vocabulary word!" : `You reviewed all ${vehicles.length} transportation words!`;
   showScreen("results");
   speak(`Round complete! You got ${state.score} out of ${total}.`);
   if (state.mode !== "flip") burstConfetti();
